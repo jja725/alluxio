@@ -320,8 +320,8 @@ public final class PlanCoordinator {
         mPlanInfo.setResult(join(taskInfoList));
         mPlanInfo.setStatus(Status.COMPLETED);
         //Increment the counter for Complete status when all the tasks in a job are completed.
-        DistributedCmdMetrics
-          .incrementForAllConfigsCompleteStatus(config, fileSystem, new CountingRetry(5));
+//        DistributedCmdMetrics
+//          .incrementForAllConfigsCompleteStatus(config, fileSystem, new CountingRetry(5));
       } catch (Exception e) {
         LOG.warn("Job error when joining tasks Job Id={} Config={}",
             mPlanInfo.getId(), mPlanInfo.getJobConfig(), e);
