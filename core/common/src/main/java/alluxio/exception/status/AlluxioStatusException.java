@@ -178,7 +178,7 @@ public class AlluxioStatusException extends IOException {
    * @param throwable a throwable
    * @return the converted {@link AlluxioStatusException}
    */
-  public static AlluxioStatusException fromCheckedException(Throwable throwable) {
+  private static AlluxioStatusException fromCheckedException(Throwable throwable) {
     try {
       throw throwable;
     } catch (IOException e) {

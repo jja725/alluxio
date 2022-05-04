@@ -337,10 +337,15 @@ public final class UnderFileSystemBlockReader extends BlockReader {
       // This can only happen when the session is expired.
       LOG.warn("Block {} does not exist when being aborted. The session may have expired.",
           mBlockMeta.getBlockId());
-    } catch (BlockAlreadyExistsException | InvalidWorkerStateException | IOException e) {
+    } catch (BlockAlreadyExistsException | InvalidWorkerStateException e) {
       // We cannot skip the exception here because we need to make sure that the user of this
       // reader does not commit the block if it fails to abort the block.
-      throw AlluxioStatusException.fromCheckedException(e);
+      throw AlluxioStatusException.fromAlluxioException(e);
+    }
+    catch (IOException e) {
+      // We cannot skip the exception here because we need to make sure that the user of this
+      // reader does not commit the block if it fails to abort the block.
+      throw AlluxioStatusException.fromIOException(e);
     }
   }
 
