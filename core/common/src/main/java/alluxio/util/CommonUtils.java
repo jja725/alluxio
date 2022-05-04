@@ -688,33 +688,6 @@ public final class CommonUtils {
       new AtomicReference<>(ProcessType.CLIENT);
 
   /**
-   * Unwraps a {@link alluxio.proto.dataserver.Protocol.Response}.
-   *
-   * @param response the response
-   */
-  public static void unwrapResponse(Protocol.Response response) throws AlluxioStatusException {
-    Status status = ProtoUtils.fromProto(response.getStatus());
-    if (status != Status.OK) {
-      throw AlluxioStatusException.from(status.withDescription(response.getMessage()));
-    }
-  }
-
-  /**
-   * Unwraps a {@link alluxio.proto.dataserver.Protocol.Response} associated with a channel.
-   *
-   * @param response the response
-   * @param channel the channel that receives this response
-   */
-  public static void unwrapResponseFrom(Protocol.Response response, Channel channel)
-      throws AlluxioStatusException {
-    Status status = ProtoUtils.fromProto(response.getStatus());
-    if (status != Status.OK) {
-      throw AlluxioStatusException.from(status.withDescription(
-          String.format("Channel to %s: %s", channel.remoteAddress(), response.getMessage())));
-    }
-  }
-
-  /**
    * @param address the Alluxio worker network address
    * @param conf Alluxio configuration
    * @return true if the worker is local

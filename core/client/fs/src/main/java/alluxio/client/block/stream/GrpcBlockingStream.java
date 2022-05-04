@@ -313,7 +313,7 @@ public class GrpcBlockingStream<ReqT, ResT> {
       ex = AlluxioStatusException.fromThrowable(mError);
     }
     // attaches description to the exception while maintaining the cause
-    return (AlluxioStatusException) AlluxioStatusException
+    return AlluxioStatusException
         .from(ex.getStatus().withDescription(formatErrorMessage(ex.getMessage())));
   }
 
