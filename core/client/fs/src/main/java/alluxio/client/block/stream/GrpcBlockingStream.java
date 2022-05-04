@@ -261,13 +261,6 @@ public class GrpcBlockingStream<ReqT, ResT> {
   }
 
   /**
-   * @return whether the stream is closed by the server
-   */
-  public boolean isClosedFromRemote() {
-    return mClosedFromRemote;
-  }
-
-  /**
    * @return whether the stream is open
    */
   public boolean isOpen() {
@@ -320,7 +313,7 @@ public class GrpcBlockingStream<ReqT, ResT> {
   private String formatErrorMessage(String format, Object... args) {
     StringBuilder errorMessage = new StringBuilder(
         format == null ? "Unknown error" : String.format(format, args));
-    return new StringBuilder(errorMessage).append(String.format(" (%s)", mDescription)).toString();
+    return errorMessage.append(String.format(" (%s)", mDescription)).toString();
   }
 
   private final class ResponseStreamObserver
