@@ -176,7 +176,8 @@ public class BlockWorkerClientServiceHandler extends BlockWorkerGrpc.BlockWorker
   public void load(LoadRequest request, StreamObserver<LoadResponse> responseObserver) {
     RpcUtils.call(LOG, () -> {
       LoadResponse.Builder response = LoadResponse.newBuilder();
-      List<BlockStatus> failures = mBlockWorker.load(request);
+      List<BlockStatus> failures =
+          mBlockWorker.load(request.getFileBlocksList(), request.getTag(), request.getBandwidth());
       int numBlocks =
           request.getFileBlocksList().stream().mapToInt(FileBlocks::getBlockIdCount).sum();
       TaskStatus taskStatus = TaskStatus.SUCCESS;

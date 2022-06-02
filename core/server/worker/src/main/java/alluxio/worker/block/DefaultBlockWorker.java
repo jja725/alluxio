@@ -34,9 +34,9 @@ import alluxio.exception.status.UnavailableException;
 import alluxio.grpc.AsyncCacheRequest;
 import alluxio.grpc.BlockStatus;
 import alluxio.grpc.CacheRequest;
+import alluxio.grpc.FileBlocks;
 import alluxio.grpc.GetConfigurationPOptions;
 import alluxio.grpc.GrpcService;
-import alluxio.grpc.LoadRequest;
 import alluxio.grpc.ServiceType;
 import alluxio.heartbeat.HeartbeatContext;
 import alluxio.heartbeat.HeartbeatExecutor;
@@ -49,6 +49,7 @@ import alluxio.proto.dataserver.Protocol;
 import alluxio.retry.RetryUtils;
 import alluxio.security.user.ServerUserState;
 import alluxio.underfs.UfsManager;
+import alluxio.util.IdUtils;
 import alluxio.util.executor.ExecutorServiceFactories;
 import alluxio.wire.Configuration;
 import alluxio.wire.FileInfo;
@@ -74,12 +75,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.concurrent.NotThreadSafe;
 import javax.annotation.concurrent.ThreadSafe;
@@ -96,8 +100,6 @@ import javax.annotation.concurrent.ThreadSafe;
 @NotThreadSafe
 public class DefaultBlockWorker extends AbstractWorker implements BlockWorker {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultBlockWorker.class);
-  private static final long UFS_BLOCK_OPEN_TIMEOUT_MS =
-      ServerConfiguration.getMs(PropertyKey.WORKER_UFS_BLOCK_OPEN_TIMEOUT_MS);
 
   /** Used to close resources during stop. */
   private final Closer mResourceCloser = Closer.create();
@@ -460,8 +462,74 @@ public class DefaultBlockWorker extends AbstractWorker implements BlockWorker {
   }
 
   @Override
-  public List<BlockStatus> load(LoadRequest request) {
-    return null;
+  public List<BlockStatus> load(List<FileBlocks> fileBlocks, String tag, long bandwidth) {
+    ArrayList<BlockStatus> failures = new ArrayList<>();
+    ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
+    for (FileBlocks blocks : fileBlocks) {
+      for (long blockId : blocks.getBlockIdList()) {
+        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+          try {
+            loadInternal(blocks.getUfsPath(), blockId, blocks.getBlockSize(), tag, bandwidth);
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }, GrpcExecutors.BLOCK_READER_EXECUTOR);
+        future.exceptionally((throwable) -> {
+          failures.add(BlockStatus.newBuilder().setBlockId(blockId).setCode(1)
+              .setMessage(throwable.getMessage()).setRetryable(false).build());
+          return null;
+        });
+        futures.add(future);
+      }
+    }
+    futures.forEach(CompletableFuture::join);
+    return failures;
+  }
+
+  private void loadInternal(String ufsPath, long blockId, long blockSize, String tag,
+      long bandwidth)
+      throws WorkerOutOfSpaceException, IOException, BlockDoesNotExistException,
+      InvalidWorkerStateException {
+    long sessionId = IdUtils.createSessionId();
+
+    try {
+      mLocalBlockStore.requestSpace(sessionId, blockId, blockSize);
+      BlockStoreLocation loc = BlockStoreLocation.anyDirInTier(
+          WORKER_STORAGE_TIER_ASSOC.getAlias(0));
+
+      mLocalBlockStore.createBlock(sessionId, blockId,
+          AllocateOptions.forCreate(blockSize, loc));
+
+
+    } catch (BlockAlreadyExistsException e) {
+      LOG.debug(
+          "Failed to create block writer for UFS block blockId: {}."
+              + "Concurrent loading the same block.", blockId, e);
+      return;
+    }
+    try(BlockWriter blockWriter = mLocalBlockStore.createBlockWriter(sessionId, blockId)){
+    long offset = 0;
+    while (offset < blockSize) {
+      long bufferSize = Math.min(8L * Constants.MB, blockSize - offset);
+      byte[] data = read(blockId, blockSize, ufsPath, 0, bufferSize, false, tag);
+      offset += bufferSize;
+      ByteBuffer buffer = ByteBuffer.wrap(data, (int) (blockWriter.getPosition() - offset),
+          (int) (offset - blockWriter.getPosition()));
+
+      blockWriter.append(buffer.duplicate());
+    }
+
+    } catch (BlockAlreadyExistsException e) {
+      LOG.debug(
+          "Failed to create block writer for UFS block blockId: {}."
+              + "Concurrent loading the same block.", blockId, e);
+    }
+  }
+
+  private void loadInternal(){}
+
+  private byte[] read(long blockId, long blockSize, String ufsPath, long offset,long length, boolean positionShort, String tag){
+    return new byte[0];
   }
 
   @Override

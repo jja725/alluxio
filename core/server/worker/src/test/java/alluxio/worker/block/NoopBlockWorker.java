@@ -19,6 +19,7 @@ import alluxio.exception.WorkerOutOfSpaceException;
 import alluxio.grpc.AsyncCacheRequest;
 import alluxio.grpc.BlockStatus;
 import alluxio.grpc.CacheRequest;
+import alluxio.grpc.FileBlocks;
 import alluxio.grpc.GetConfigurationPOptions;
 import alluxio.grpc.GrpcService;
 import alluxio.grpc.LoadRequest;
@@ -122,7 +123,8 @@ public class NoopBlockWorker implements BlockWorker {
     // noop
   }
 
-  @Override public List<BlockStatus> load(LoadRequest request) {
+  @Override
+  public List<BlockStatus> load(List<FileBlocks> fileBlocks, String user, long bandwidth) {
     return null;
   }
 

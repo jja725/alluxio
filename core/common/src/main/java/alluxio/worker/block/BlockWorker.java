@@ -19,6 +19,7 @@ import alluxio.exception.WorkerOutOfSpaceException;
 import alluxio.grpc.AsyncCacheRequest;
 import alluxio.grpc.BlockStatus;
 import alluxio.grpc.CacheRequest;
+import alluxio.grpc.FileBlocks;
 import alluxio.grpc.GetConfigurationPOptions;
 import alluxio.grpc.LoadRequest;
 import alluxio.proto.dataserver.Protocol;
@@ -214,10 +215,12 @@ public interface BlockWorker extends Worker, SessionCleanable {
 
   /**
    * load blocks into alluxio.
-   * @param request load request
+   * @param fileBlocks blocks to be load
+   * @param user user tag
+   * @param bandwidth bandwith limit to ufs
    * @return failed load status
    */
-  List<BlockStatus> load(LoadRequest request);
+  List<BlockStatus> load(List<FileBlocks> fileBlocks, String user, long bandwidth);
 
   /**
    * Sets the pinlist for the underlying block store.
