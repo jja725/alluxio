@@ -36,6 +36,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.SeekableByteChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -648,6 +649,25 @@ public interface UnderFileSystem extends Closeable {
    * @return The {@code InputStream} object
    */
   InputStream open(String path, OpenOptions options) throws IOException;
+
+  /**
+   * Opens an {@link InputStream} for a file in under filesystem at the indicated path.
+   *
+   * @param path the file name
+   * @return The {@code InputStream} object
+   */
+  default SeekableByteChannel openChannel(String path) throws IOException {
+    return openChannel(path, OpenOptions.defaults());
+  }
+
+  /**
+   * Opens an {@link InputStream} for a file in under filesystem at the indicated path.
+   *
+   * @param path the file name
+   * @param options to open input stream
+   * @return The {@code InputStream} object
+   */
+  SeekableByteChannel openChannel(String path, OpenOptions options) throws IOException;
 
   /**
    * Opens an {@link InputStream} for a file in under filesystem at the indicated path.

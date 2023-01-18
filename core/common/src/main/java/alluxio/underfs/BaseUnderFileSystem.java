@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.SeekableByteChannel;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -201,6 +203,11 @@ public abstract class BaseUnderFileSystem implements UnderFileSystem {
   @Override
   public InputStream open(String path) throws IOException {
     return open(path, OpenOptions.defaults());
+  }
+
+  @Override
+  public SeekableByteChannel openChannel(String path, OpenOptions options) throws IOException {
+    return new AlluxioUfsReadChannel(open(path, options));
   }
 
   @Override
