@@ -27,6 +27,7 @@ import alluxio.exception.runtime.UnauthenticatedRuntimeException;
 import alluxio.grpc.Block;
 import alluxio.grpc.ListStatusPOptions;
 import alluxio.grpc.ListStatusPartialPOptions;
+import alluxio.grpc.LoadMetadataPType;
 import alluxio.grpc.LoadProgressReportFormat;
 import alluxio.master.file.FileSystemMaster;
 import alluxio.master.file.contexts.ListStatusContext;
@@ -521,8 +522,11 @@ public class LoadJob {
   }
 
   private class FileIterator implements Iterator<FileInfo> {
-    private final ListStatusPOptions.Builder mListOptions =
-        ListStatusPOptions.newBuilder().setRecursive(true);
+    private final ListStatusPOptions.Builder mListOptions = ListStatusPOptions
+        .newBuilder()
+        .setRecursive(true)
+        .setLoadMetadataType(Configuration.getEnum(PropertyKey.USER_FILE_METADATA_LOAD_TYPE,
+            LoadMetadataPType.class));
     private static final int PARTIAL_LISTING_BATCH_SIZE = 100;
     private final FileSystemMaster mFileSystemMaster;
     private final String mPath;
