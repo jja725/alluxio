@@ -300,7 +300,7 @@ public class PlanTracker {
         .map(Map.Entry::getKey).collect(Collectors.toSet());
   }
 
-  private void checkActiveSetReplicaJobs(JobConfig jobConfig) throws JobDoesNotExistException {
+  private void checkActiveSetReplicaJobs(JobConfig jobConfig) {
     if (jobConfig instanceof SetReplicaConfig) {
       Set<Pair<String, Long>> activeJobs = mCoordinators.values().stream()
           .filter(x -> x.getPlanInfo().getJobConfig() instanceof SetReplicaConfig)
@@ -311,8 +311,7 @@ public class PlanTracker {
       long blockId = config.getBlockId();
       Pair<String, Long> block = new Pair<>(path, blockId);
       if (activeJobs.contains(block)) {
-        throw new JobDoesNotExistException(String.format(
-            "There's SetReplica job running for path:%s blockId:%s, try later", path, blockId));
+        LOG.warn("There's SetReplica job running for path:{} blockId:{}, try later", path, blockId);
       }
     }
   }
