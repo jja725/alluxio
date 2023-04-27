@@ -57,6 +57,9 @@ public final class CommandUtils {
     Map<String, Command> commandsMap = new HashMap<>();
     Reflections reflections = new Reflections(Command.class.getPackage().getName());
     for (Class<? extends Command> cls : reflections.getSubTypesOf(Command.class)) {
+      if (cls.getSimpleName().equals("CpCommand")) {
+        continue;
+      }
       // Add commands from <pkgName>.command.*
       if (cls.getPackage().getName().equals(pkgName + ".command")
           && !Modifier.isAbstract(cls.getModifiers())) {
