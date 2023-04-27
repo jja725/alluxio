@@ -259,8 +259,8 @@ public class CopyJob extends AbstractJob<CopyJob.CopyTask> {
   public boolean isHealthy() {
     long currentFailureCount = mCurrentFailureCount.get();
     return mState != JobState.FAILED
-        && currentFailureCount <= FAILURE_COUNT_THRESHOLD
-        || (double) currentFailureCount / mProcessedFileCount.get() <= FAILURE_RATIO_THRESHOLD;
+        && (currentFailureCount <= FAILURE_COUNT_THRESHOLD
+        || (double) currentFailureCount / mProcessedFileCount.get() <= FAILURE_RATIO_THRESHOLD);
   }
 
   @Override
