@@ -511,7 +511,9 @@ public final class Scheduler {
         job.failJob(e);
         LOG.error(format("error getting next task for job %s", job), e);
       }
-
+      else {
+        LOG.warn(format("error getting next task for job %s, would retry later", job), e);
+      }
       return false;
     }
     if (!task.isPresent()) {
