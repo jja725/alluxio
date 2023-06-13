@@ -54,18 +54,11 @@ public class JournalMoveJobFactory implements JobFactory {
     String src = mJobEntry.getSrc();
     Optional<String> user =
         mJobEntry.hasUser() ? Optional.of(mJobEntry.getUser()) : Optional.empty();
-    MountTable.ReverseResolution resolution =
-        mFs.getMountTable().reverseResolve(new AlluxioURI(src));
-    long mountId;
-    if (resolution == null) {
-      throw new NotFoundRuntimeException("Mount point not found");
-    }
-    else {
-      mountId = resolution.getMountInfo().getMountId();
-    }
+    long srcMountId = getMountId(src);
+    long dstMountId = getMountId(mJobEntry.getDst());
     UnderFileSystem ufs;
     try {
-      ufs = mFs.getUfsManager().get(mountId).acquireUfsResource().get();
+      ufs = mFs.getUfsManager().get(srcMountId).acquireUfsResource().get();
     } catch (NotFoundException | UnavailableException e) {
       // concurrent mount table change would cause this exception
       throw new FailedPreconditionRuntimeException(e);
@@ -75,7 +68,7 @@ public class JournalMoveJobFactory implements JobFactory {
             FileInfo::isCompleted;
     Iterable<FileInfo> fileIterator =
         new UfsFileIterable(ufs, src, user, mJobEntry.getPartialListing(), predicate);
-    AbstractJob<?> job = getMoveJob(user, fileIterator);
+    AbstractJob<?> job = getMoveJob(user, fileIterator, srcMountId, dstMountId);
     job.setJobState(JobState.fromProto(mJobEntry.getState()), false);
     if (mJobEntry.hasEndTime()) {
       job.setEndTime(mJobEntry.getEndTime());
@@ -83,7 +76,21 @@ public class JournalMoveJobFactory implements JobFactory {
     return job;
   }
 
-  private MoveJob getMoveJob(Optional<String> user, Iterable<FileInfo> fileIterator) {
+  private long getMountId(String ufsPath) {
+    MountTable.ReverseResolution srcResolution =
+        mFs.getMountTable().reverseResolve(new AlluxioURI(ufsPath));
+    long mountId;
+    if (srcResolution == null) {
+      throw new NotFoundRuntimeException("Mount point not found");
+    }
+    else {
+      mountId = srcResolution.getMountInfo().getMountId();
+    }
+    return mountId;
+  }
+
+  private MoveJob getMoveJob(Optional<String> user, Iterable<FileInfo> fileIterator, long srcMountId,
+                             long dstMountId) {
     Optional<FileFilter> fileFilter = mJobEntry.hasFilter() ? Optional.of(mJobEntry.getFilter()) :
         Optional.empty();
     MoveJob job =
@@ -91,7 +98,7 @@ public class JournalMoveJobFactory implements JobFactory {
             mJobEntry.getJobId(),
             mJobEntry.hasBandwidth() ? OptionalLong.of(mJobEntry.getBandwidth()) :
                 OptionalLong.empty(), mJobEntry.getPartialListing(), mJobEntry.getVerify(),
-            mJobEntry.getCheckContent(), fileIterator, fileFilter);
+            mJobEntry.getCheckContent(), fileIterator, fileFilter, srcMountId, dstMountId);
     return job;
   }
 }

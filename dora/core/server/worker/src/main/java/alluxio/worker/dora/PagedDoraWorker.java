@@ -590,8 +590,8 @@ public class PagedDoraWorker extends AbstractWorker implements DoraWorker {
     List<RouteFailure> errors = Collections.synchronizedList(new ArrayList<>());
 
     for (Route route : routes) {
-      UnderFileSystem srcUfs = getUnderFileSystem(route.getSrc());
-      UnderFileSystem dstUfs = getUnderFileSystem(route.getDst());
+      UnderFileSystem srcUfs = getUnderFileSystem(route.getSrc(), route.getSrcMountId());
+      UnderFileSystem dstUfs = getUnderFileSystem(route.getDst(), route.getSrcMountId());
       String srcRoot = new AlluxioURI(route.getSrc()).getRootPath();
       String dstRoot = new AlluxioURI(route.getDst()).getRootPath();
 
@@ -624,7 +624,7 @@ public class PagedDoraWorker extends AbstractWorker implements DoraWorker {
     return Futures.whenAllComplete(futures).call(() -> errors, GrpcExecutors.BLOCK_WRITER_EXECUTOR);
   }
 
-  protected UnderFileSystem getUnderFileSystem(String ufsPath) {
+  protected UnderFileSystem getUnderFileSystem(String ufsPath, long mountId) {
     return mUfsManager.getOrAdd(new AlluxioURI(ufsPath),
         UnderFileSystemConfiguration.defaults(mConf));
   }
@@ -635,8 +635,8 @@ public class PagedDoraWorker extends AbstractWorker implements DoraWorker {
     List<ListenableFuture<Void>> futures = new ArrayList<>();
     List<RouteFailure> errors = Collections.synchronizedList(new ArrayList<>());
     for (Route route : routes) {
-      UnderFileSystem srcUfs = getUnderFileSystem(route.getSrc());
-      UnderFileSystem dstUfs = getUnderFileSystem(route.getDst());
+      UnderFileSystem srcUfs = getUnderFileSystem(route.getSrc(), route.getSrcMountId());
+      UnderFileSystem dstUfs = getUnderFileSystem(route.getDst(), route.getDstMountId());
       String srcRoot = new AlluxioURI(route.getSrc()).getRootPath();
       String dstRoot = new AlluxioURI(route.getDst()).getRootPath();
       try (FileSystem srcFs = new UfsBaseFileSystem(mFsContext, new UfsFileSystemOptions(srcRoot),

@@ -96,6 +96,8 @@ public class MoveJob extends AbstractJob<MoveJob.MoveTask> {
   private final String mDst;
   private final boolean mOverwrite;
   private final boolean mCheckContent;
+  private final long mSrcMountId;
+  private final long mDstMountId;
   private OptionalLong mBandwidth;
   private boolean mUsePartialListing;
   private boolean mVerificationEnabled;
@@ -129,11 +131,13 @@ public class MoveJob extends AbstractJob<MoveJob.MoveTask> {
    * @param checkContent        whether to check content
    * @param fileIterable        file iterable
    * @param filter              file filter
+   * @param srcMountId
+   * @param dstMountId
    */
   public MoveJob(String src, String dst, boolean overwrite, Optional<String> user, String jobId,
                  OptionalLong bandwidth, boolean usePartialListing, boolean verificationEnabled,
                  boolean checkContent, Iterable<FileInfo> fileIterable,
-                 Optional<FileFilter> filter) {
+                 Optional<FileFilter> filter, long srcMountId, long dstMountId) {
     super(user, jobId);
     mSrc = requireNonNull(src, "src is null");
     mDst = requireNonNull(dst, "dst is null");
@@ -149,6 +153,8 @@ public class MoveJob extends AbstractJob<MoveJob.MoveTask> {
     mOverwrite = overwrite;
     mCheckContent = checkContent;
     mFilter = filter;
+    mSrcMountId = srcMountId;
+    mDstMountId = dstMountId;
   }
 
   /**
@@ -385,7 +391,7 @@ public class MoveJob extends AbstractJob<MoveJob.MoveTask> {
     }
     String dst = PathUtils.concatPath(mDst, relativePath);
     return Route.newBuilder().setSrc(sourceFile.getUfsPath())
-        .setDst(dst).setLength(sourceFile.getLength()).build();
+        .setDst(dst).setSrcMountId(mSrcMountId).setDstMountId(mDstMountId).setLength(sourceFile.getLength()).build();
   }
 
   @Override

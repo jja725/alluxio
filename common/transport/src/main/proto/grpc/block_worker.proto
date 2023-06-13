@@ -301,6 +301,8 @@ message Route {
   required string src = 1;
   required string dst = 2;
   optional int64 length = 3;
+  optional int64 src_mount_id = 4;
+  optional int64 dst_mount_id = 5;
 }
 
 message CopyResponse {

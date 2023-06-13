@@ -71,7 +71,7 @@ public class MoveJobTest {
         new FileIterable(fileSystemMaster, srcPath, user, false, MoveJob.QUALIFIED_FILE_FILTER);
     MoveJob move = new MoveJob(srcPath, dstPath, false, user, "1",
         OptionalLong.empty(), false, false, false, files,
-        Optional.empty());
+        Optional.empty(), srcMountId, dstMountId);
     List<WorkerInfo> workers = ImmutableList.of(
         new WorkerInfo().setId(1).setAddress(
             new WorkerNetAddress().setHost("worker1").setRpcPort(1234)),
@@ -94,7 +94,7 @@ public class MoveJobTest {
         new FileIterable(fileSystemMaster, srcPath, user, false, MoveJob.QUALIFIED_FILE_FILTER);
     MoveJob move = new MoveJob(srcPath, dstPath, false, user, "1",
         OptionalLong.empty(), false, false, false, files,
-        Optional.empty());
+        Optional.empty(), srcMountId, dstMountId);
     List<Route> routes = move.getNextRoutes(100);
     assertTrue(move.isHealthy());
     routes.forEach(move::addToRetry);
@@ -125,7 +125,7 @@ public class MoveJobTest {
         new FileIterable(fileSystemMaster, srcPath, user, false, MoveJob.QUALIFIED_FILE_FILTER);
     MoveJob job = spy(new MoveJob(srcPath, dstPath, false, user, "1",
         OptionalLong.empty(), false, false, false, files,
-        Optional.empty()));
+        Optional.empty(), srcMountId, dstMountId));
     when(job.getDurationInSec()).thenReturn(0L);
     job.setJobState(JobState.RUNNING, false);
     List<Route> nextRoutes = job.getNextRoutes(25);
@@ -206,7 +206,7 @@ public class MoveJobTest {
         new FileIterable(fileSystemMaster, srcPath, user, false, filePredicate.get());
     MoveJob job = spy(new MoveJob(srcPath, dstPath, false, user, "1",
         OptionalLong.empty(), false, false, false, files,
-        Optional.of(builder.build())));
+        Optional.of(builder.build()), srcMountId, dstMountId));
 
     List<Route> routes = job.getNextRoutes(3);
     assertEquals(PathUtils.concatPath(srcPath, dtf.format(threeDaysBefore)),
@@ -243,7 +243,7 @@ public class MoveJobTest {
         new FileIterable(fileSystemMaster, srcPath, user, false, filePredicate.get());
     MoveJob job = spy(new MoveJob(srcPath, dstPath, false, user, "1",
         OptionalLong.empty(), false, false, false, files,
-        Optional.of(builder.build())));
+        Optional.of(builder.build()), srcMountId, dstMountId));
 
     List<Route> routes = job.getNextRoutes(3);
     assertEquals(PathUtils.concatPath(srcPath, "bbbbbb"), routes.get(0).getSrc());
