@@ -544,7 +544,7 @@ public class PagedDoraWorker extends AbstractWorker implements DoraWorker {
     AtomicInteger skippedFiles = new AtomicInteger();
     AtomicLong skippedFileLength = new AtomicLong();
     for (UfsStatus status : ufsStatuses) {
-      String ufsFullPath = status.getUfsFullPath().toString();
+      String ufsFullPath = status.getUfsPath();
       DoraMeta.FileStatus fs = buildFileStatusFromUfsStatus(status, ufsFullPath);
       Optional<DoraMeta.FileStatus> originalFs = mMetaManager.getFromMetaStore(ufsFullPath);
       mMetaManager.put(ufsFullPath, fs);
