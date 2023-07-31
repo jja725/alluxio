@@ -64,7 +64,6 @@ import alluxio.membership.MasterMembershipManager;
 import alluxio.membership.MembershipManager;
 import alluxio.metrics.MetricKey;
 import alluxio.metrics.MetricsSystem;
-import alluxio.network.protocol.databuffer.PooledDirectNioByteBuf;
 import alluxio.proto.dataserver.Protocol;
 import alluxio.proto.meta.DoraMeta;
 import alluxio.resource.PooledResource;
@@ -545,7 +544,7 @@ public class PagedDoraWorker extends AbstractWorker implements DoraWorker {
     AtomicInteger skippedFiles = new AtomicInteger();
     AtomicLong skippedFileLength = new AtomicLong();
     for (UfsStatus status : ufsStatuses) {
-      String ufsFullPath = status.getUfsPath();
+      String ufsFullPath = status.getUfsFullPath().toString();
       DoraMeta.FileStatus fs = buildFileStatusFromUfsStatus(status, ufsFullPath);
       Optional<DoraMeta.FileStatus> originalFs = mMetaManager.getFromMetaStore(ufsFullPath);
       mMetaManager.put(ufsFullPath, fs);
@@ -578,7 +577,8 @@ public class PagedDoraWorker extends AbstractWorker implements DoraWorker {
               if (options.hasUser()) {
                 AuthenticatedClientUser.set(options.getUser());
               }
-              loadData(block.getUfsPath(), 0, block.getOffsetInFile(), block.getLength(),block.getUfsStatus().getUfsFileStatus().getContentLength());
+              loadData(block.getUfsPath(), 0, block.getOffsetInFile(), block.getLength(),
+                  block.getUfsStatus().getUfsFileStatus().getContentLength());
             } catch (Throwable e) {
               LOG.error("Loading {} failed", block, e);
               boolean permissionCheckSucceeded = !(e instanceof AccessControlException);
@@ -611,15 +611,15 @@ public class PagedDoraWorker extends AbstractWorker implements DoraWorker {
   }
 
   protected void loadData(String ufsPath, long mountId, long offset, long lengthToLoad,
-      long fileLength)
-      throws AccessControlException, IOException {
+      long fileLength) throws AccessControlException, IOException {
     Protocol.OpenUfsBlockOptions options =
         Protocol.OpenUfsBlockOptions.newBuilder().setUfsPath(ufsPath).setMountId(mountId)
-                                    .setNoCache(false).setOffsetInFile(offset).setBlockSize(fileLength)
-                                    .build();
+                                    .setNoCache(false).setOffsetInFile(offset)
+                                    .setBlockSize(fileLength).build();
     String fileId = new AlluxioURI(ufsPath).hash();
     long bufferSize = 4 * mPageSize;
-    ByteBuf buf = PooledByteBufAllocator.DEFAULT.directBuffer((int) Math.min(bufferSize, lengthToLoad));
+    ByteBuf buf =
+        PooledByteBufAllocator.DEFAULT.directBuffer((int) Math.min(bufferSize, lengthToLoad));
     try (BlockReader fileReader = createFileReader(fileId, offset, false, options)) {
       //Transfers data from this reader to the buffer until we reach lengthToLoad.
       int bytesRead;
