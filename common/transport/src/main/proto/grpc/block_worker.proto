@@ -274,6 +274,7 @@ message BlockStatus {
   optional bool retryable = 4;
 }
 
+// load subtask failure, either metadata or load block we only need to input one of them
 message LoadFailure {
   optional UfsStatus ufs_status = 1;
   // The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].

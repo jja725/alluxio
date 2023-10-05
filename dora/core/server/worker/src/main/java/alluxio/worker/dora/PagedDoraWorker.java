@@ -622,9 +622,14 @@ public class PagedDoraWorker extends AbstractWorker implements DoraWorker {
                                     .setNoCache(false).setOffsetInFile(offset)
                                     .setBlockSize(fileLength).build();
     String fileId = new AlluxioURI(ufsPath).hash();
-    long bufferSize = 4 * mPageSize;
+    int bufferSize = (int) Math.min(4 * mPageSize, lengthToLoad);
+    // make it 1 page size if lengthToLoad is small,
+    // so these aligned buffers can be reused and reduce fragmentation.
+    if (bufferSize < mPageSize) {
+      bufferSize = (int) mPageSize;
+    }
     ByteBuf buf =
-        PooledByteBufAllocator.DEFAULT.directBuffer((int) Math.min(bufferSize, lengthToLoad));
+        PooledByteBufAllocator.DEFAULT.directBuffer(bufferSize);
     try (BlockReader fileReader = createFileReader(fileId, offset, false, options)) {
       //Transfers data from this reader to the buffer until we reach lengthToLoad.
       int bytesRead;

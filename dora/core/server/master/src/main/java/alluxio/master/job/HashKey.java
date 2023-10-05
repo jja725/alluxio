@@ -16,7 +16,16 @@ import static java.lang.String.format;
 import java.util.OptionalInt;
 
 /**
- * The key for accessing the hash ring .
+ * The key for accessing the hash ring.
+ * There's two types of usage for this key:
+ * 1. metadata operation: the partition index is not present
+ * 2. data operation: the partition index is present and decided based on the
+ *   virtual block index.
+ *
+ * Notice for compatibility reason, when the partition index is 0
+ * or not present(meaning it's a metadata operation), we don't append the virtual block
+ * index to the key.
+ *
  */
 public final class HashKey {
   private String mUFSPath;
@@ -40,13 +49,6 @@ public final class HashKey {
     mVirtualBlockIndex = virtualBlockIndex;
   }
 
-  /**
-   * @return the ufs path
-   */
-  public String getUFSPath() {
-    return mUFSPath;
-  }
-
   @Override
   public String toString() {
     if (mVirtualBlockIndex.isPresent() && mVirtualBlockIndex.getAsInt() != 0) {
@@ -57,12 +59,5 @@ public final class HashKey {
     else {
       return mUFSPath;
     }
-  }
-
-  /**
-   * @return true if the key represents metadata
-   */
-  public boolean isMetadata() {
-    return !mVirtualBlockIndex.isPresent();
   }
 }
