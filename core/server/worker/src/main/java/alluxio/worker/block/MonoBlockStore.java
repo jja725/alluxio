@@ -194,7 +194,7 @@ public class MonoBlockStore implements BlockStore {
       return blockReader;
     } catch (Exception e) {
       try {
-        closeUfsBlock(sessionId, blockId);
+        abortUfsBlock(sessionId, blockId);
       } catch (Exception ee) {
         LOG.warn("Failed to close UFS block", ee);
       }
